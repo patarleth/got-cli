@@ -4,27 +4,35 @@ first things first - install leveldb cli
 
 https://github.com/heapwolf/ldb
 
-tldr; - run this
+### tldr; - run this
 
 ```
 $ src/main/shell/setup.sh
+$ ldb_init
+$ ldb_create
+$ lbd_add_data
 ```
 
-what that did - 
+get a cup of coffee, this takes a while ;)
 
-installs this
+
+### what that did - 
+
+#### installs this
+
 ```
 $ brew install jq snappy cmake
 $ git clone https://github.com/heapwolf/ldb.git
 $ make install -C ldb
 ```
 
-create a db
+#### create a db
+
 ```
 $ ldb ./gotdb --create
 ```
 
-loads the data from AnApiOfIceAndFire
+#### loads the data from AnApiOfIceAndFire
 
 ```
 https://raw.githubusercontent.com/joakimskoog/AnApiOfIceAndFire/master/data/houses.json
@@ -32,14 +40,16 @@ https://raw.githubusercontent.com/joakimskoog/AnApiOfIceAndFire/master/data/char
 https://raw.githubusercontent.com/joakimskoog/AnApiOfIceAndFire/master/data/books.json
 ```
 
-into pk index like 
+#### into pk index per table like so
+
 ```
 book_1 -> {...book json...}
 character_1 -> {...character json...}
 house_1 -> {...family house json...}
 ```
 
-secondary indexes look like 
+#### secondary indexes created on Name look like 
+
 ```
 book_name_arleth -> ["book_20"]
 ```
