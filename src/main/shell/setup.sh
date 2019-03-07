@@ -7,6 +7,40 @@ DATA_DIR="$PROJECT_DIR/data"
 
 echo "$PROJECT_DIR"
 
+function ldb_next_letter () {
+    local Rest Letters=abcdefghijklmnopqrstuvwxyz
+    Rest=${Letters#*$1}
+    echo ${Rest:0:1}
+}
+
+ldb_append_id_to_array() {
+    local id="$1"
+    local json="$2";
+
+    if [ "$json" == "" ]; then
+        json='[]'
+    fi
+
+    local jqCmd='. += [ "'
+    jqCmd+="$id"
+    jqCmd+='" ]'
+    jq -c "$jqCmd" <<< "$json"
+}
+
+ldb_array_index() {
+    local id="$1"
+    local json="$2"
+
+    local jqCmd='. | index ("'
+    jqCmd+="$id"
+    jqCmd+='" )'
+    
+    local index="$(jq -r "$jqCmd" <<<"$json")"
+    if [ ! "$index" == "null" ]; then
+        echo "$index"
+    fi
+}
+
 ldb_init() {
     if command -v ldb > /dev/null; then
         echo ldb installed
@@ -20,7 +54,7 @@ ldb_create() {
     if [ -e "$DB_DIR" ]; then
         echo $(basename "$DB_DIR") db exists
     else
-        echo ldb "$DB_DIR" --create
+        ldb "$DB_DIR" --create
     fi
 }
 
@@ -52,6 +86,39 @@ ldb_curl_data() {
 
 }
 
+ldb_add_index() {
+    local table="$1"
+    local id="$2"
+    local fieldName="$3"
+    local json="$4"
+    local prefix="$table_"
+    
+    local jqCmd='.'
+    jqCmd+="$fieldName"
+
+    local rawValue="$(jq -c "$jqCmd" <<<"$json")"
+    rawValue="${rawValue,,}"
+    
+    local fieldValueToIndex="${prefix}${rawValue}"
+    if [ ! "$fieldValueToIndex" == "${prefix}" ]; then
+        # bout std out
+        # berr std err
+        . <({ berr=$({ bout=$(ldb "$DB_DIR" get "$fieldValueToIndex"); } 2>&1; declare -p bout >&2); declare -p berr; } 2>&1)
+        
+        if [ "$(ldb_array_index "$id" "$bout")" == "" ]; then
+            ldb "$DB_DIR" put "$fieldValueToIndex" "$(ldb_append_id_to_array "$id", "$bout")"
+        fi
+    fi
+}
+
+ldb_query_index() {
+    local table="$1"
+    local start="$2"
+    local firstLetter="${start:0:1}"
+    local nextLetter="$(ldb_next_letter $firstLetter)"
+
+    ldb
+}
 ldb_add_houses() {
     echo adding house data
     local B_IFS="$IFS"
@@ -62,11 +129,12 @@ ldb_add_houses() {
     IFS="$B_IFS"
 
     for house in "${all[@]}"; do
-        local id="house-$(jq -c '.Id' <<<"$house")"
+        local id="house_$(jq -c '.Id' <<<"$house")"
         # echo "house Id $id"
         err="$(ldb "$DB_DIR" get "$id" 2>&1 > /dev/null)"
-        if [ "$err" != "" ]; then
+        if [ ! "$err" == "" ]; then
             ldb "$DB_DIR" put "$id" "$house"
+            ldb_add_index "house" "$id" "Name" "$bout"
         fi
     done
 }
@@ -81,11 +149,12 @@ ldb_add_characters() {
     IFS="$B_IFS"
 
     for character in "${all[@]}"; do
-        local id="character-$(jq -c '.Id' <<<"$character")"
+        local id="character_$(jq -c '.Id' <<<"$character")"
         # echo "character Id $id"
         err="$(ldb "$DB_DIR" get "$id" 2>&1 > /dev/null)"
-        if [ "$err" != "" ]; then
+        if [ ! "$err" == "" ]; then
             ldb "$DB_DIR" put "$id" "$character"
+            ldb_add_index "character" "$id" "Name" "$bout"
         fi
     done
 }
@@ -100,18 +169,19 @@ ldb_add_books() {
     IFS="$B_IFS"
 
     for book in "${all[@]}"; do
-        local id="book-$(jq -c '.Id' <<<"$book")"
+        local id="book_$(jq -c '.Id' <<<"$book")"
         # echo "book Id $id" 
         err="$(ldb "$DB_DIR" get "$id" 2>&1 > /dev/null)"
-        if [ "$err" != "" ]; then
+        if [ ! "$err" == "" ]; then
             ldb "$DB_DIR" put "$id" "$book"
+            ldb_add_index "book" "$id" "Name" "$bout"
         fi
     done
 }
 
-ldb_init
-ldb_create
-ldb_curl_data
-ldb_add_houses
-ldb_add_characters
-ldb_add_books
+#ldb_init
+#ldb_create
+#ldb_curl_data
+#ldb_add_houses
+#ldb_add_characters
+#ldb_add_books

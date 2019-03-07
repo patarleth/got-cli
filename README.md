@@ -2,6 +2,8 @@
 
 first things first - install leveldb cli
 
+https://github.com/heapwolf/ldb
+
 ```
 $ brew install jq snappy cmake
 $ git clone https://github.com/heapwolf/ldb.git
