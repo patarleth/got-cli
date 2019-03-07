@@ -41,7 +41,7 @@ house_1 -> {...family house json...}
 
 secondary indexes look like 
 ```
-book_pat -> [20]
+book_name_arleth -> ["book_20"]
 ```
 
-key is table_&lt;indexed value&gt; -> arrays of ids
+key is table_field_&lt;indexed value&gt; -> arrays of ids

@@ -41,6 +41,15 @@ ldb_array_index() {
     fi
 }
 
+ldb_create() {
+    if [ -d "$DB_DIR" ]; then
+        echo "$(basename "$DB_DIR") db exists"
+    else
+        echo creating db "$DB_DIR"
+        ldb "$DB_DIR" --create
+    fi
+}
+
 ldb_init() {
     if command -v ldb > /dev/null; then
         echo ldb installed
@@ -48,14 +57,8 @@ ldb_init() {
         echo ldb not installed
         brew install jq snappy cmake
     fi
-}
 
-ldb_create() {
-    if [ -e "$DB_DIR" ]; then
-        echo $(basename "$DB_DIR") db exists
-    else
-        ldb "$DB_DIR" --create
-    fi
+    ldb_create
 }
 
 ldb_curl_data() {
@@ -91,16 +94,18 @@ ldb_add_index() {
     local id="$2"
     local fieldName="$3"
     local json="$4"
-    local prefix="$table_"
+    local prefix="$table_${fieldName,,}_"
     
     local jqCmd='.'
     jqCmd+="$fieldName"
 
     local rawValue="$(jq -c "$jqCmd" <<<"$json")"
     rawValue="${rawValue,,}"
+    # echo "rawValue ${rawValue} jqCmd ${jqCmd}" json ${json}"
     
     local fieldValueToIndex="${prefix}${rawValue}"
     if [ ! "$fieldValueToIndex" == "${prefix}" ]; then
+        echo adding secondary index to "$table" - "$id" "$fieldName" "$fieldValueToIndex"
         # bout std out
         # berr std err
         . <({ berr=$({ bout=$(ldb "$DB_DIR" get "$fieldValueToIndex"); } 2>&1; declare -p bout >&2); declare -p berr; } 2>&1)
@@ -133,8 +138,9 @@ ldb_add_houses() {
         # echo "house Id $id"
         err="$(ldb "$DB_DIR" get "$id" 2>&1 > /dev/null)"
         if [ ! "$err" == "" ]; then
+            echo adding "$id"
             ldb "$DB_DIR" put "$id" "$house"
-            ldb_add_index "house" "$id" "Name" "$bout"
+            ldb_add_index "house" "$id" "Name" "$house"
         fi
     done
 }
@@ -154,7 +160,7 @@ ldb_add_characters() {
         err="$(ldb "$DB_DIR" get "$id" 2>&1 > /dev/null)"
         if [ ! "$err" == "" ]; then
             ldb "$DB_DIR" put "$id" "$character"
-            ldb_add_index "character" "$id" "Name" "$bout"
+            ldb_add_index "character" "$id" "Name" "$character"
         fi
     done
 }
@@ -174,14 +180,18 @@ ldb_add_books() {
         err="$(ldb "$DB_DIR" get "$id" 2>&1 > /dev/null)"
         if [ ! "$err" == "" ]; then
             ldb "$DB_DIR" put "$id" "$book"
-            ldb_add_index "book" "$id" "Name" "$bout"
+            ldb_add_index "book" "$id" "Name" "$book"
         fi
     done
 }
 
-#ldb_init
-#ldb_create
-#ldb_curl_data
-#ldb_add_houses
-#ldb_add_characters
-#ldb_add_books
+lbd_add_data() {
+    ldb_curl_data
+    ldb_add_books
+    ldb_add_houses
+    ldb_add_characters
+}
+
+# ldb_init && ldb_create
+
+
