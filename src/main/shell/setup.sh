@@ -47,7 +47,7 @@ ldb_create() {
         echo "$(basename "$DB_DIR") db exists"
     else
         echo creating db "$DB_DIR"
-        ldb "$DB_DIR" --create
+        ldb "$DB_DIR" --create --size
     fi
 }
 
