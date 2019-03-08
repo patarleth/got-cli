@@ -59,7 +59,18 @@ ldb_init() {
         brew install jq snappy cmake
     fi
 
-    ldb_create
+    if [ ! -d "$DB_DIR" ]; then
+        if [ -f "$PROJECT_DIR/gotdb.tgz" ]; then
+            pushd "$PROJECT_DIR"
+            tar xf gotdb.tgz
+            popd
+        else
+            ldb_create
+            ldb_add_data
+            tar -czf gotdb.tgz
+        fi        
+    fi
+
 }
 
 ldb_curl_data() {
@@ -376,6 +387,6 @@ ldb_add_data() {
     "$DATA_DIR/puts.sh"
 }
 
-# ldb_init && ldb_create
+ldb_init
 
 
