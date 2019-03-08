@@ -90,18 +90,18 @@ ldb_curl_data() {
 
 }
 
-ldb_escape() {
-    # echo "${1// /\\ }"
-    echo "$1"
+ldb_escape_ticks() {
+    echo "${1//\'/\'\\\'\'}"
 }
 
 ldb_put() {
     local key="$1"
-    local val="$2"
+    local val="$(ldb_escape_ticks "$2")"
 
     local msg="ldb $DB_DIR put "
     msg+="'${key}' "
     msg+="'${val}'"
+    msg+="; echo ${key}"
         
     echo "$msg" >> "$DATA_DIR/puts.sh"
 }
@@ -360,14 +360,14 @@ ldb_add_data() {
     chmod 777 "$DATA_DIR/puts.sh"
 
     ldb_add_books
-    # ldb_add_houses
-    # ldb_add_characters
+    ldb_add_houses
+    ldb_add_characters
 
     rm -rf "$DATA_DIR/index.txt"
     touch "$DATA_DIR/index.txt"
 
     ldb_add_book_secondary
-    # ldb_add_house_secondary
+    ldb_add_house_secondary
     # ldb_add_character_secondary
     sort "$DATA_DIR/index.txt" > "$DATA_DIR/index.sorted.txt"
 
