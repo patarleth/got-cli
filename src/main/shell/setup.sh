@@ -60,15 +60,15 @@ ldb_init() {
     fi
 
     if [ ! -d "$DB_DIR" ]; then
+        pushd "$PROJECT_DIR"
         if [ -f "$PROJECT_DIR/gotdb.tgz" ]; then
-            pushd "$PROJECT_DIR"
             tar xf gotdb.tgz
-            popd
         else
             ldb_create
             ldb_add_data
-            tar -czf gotdb.tgz
+            tar -czf gotdb.tgz gotdb
         fi        
+        popd
     fi
 
 }
@@ -395,7 +395,8 @@ ldb_add_data() {
 
     ldb_add_book_secondary
     ldb_add_house_secondary
-    # ldb_add_character_secondary
+    ldb_add_character_secondary
+    
     sort "$DATA_DIR/index.txt" > "$DATA_DIR/index.sorted.txt"
 
     ldb_build_index_puts
