@@ -219,12 +219,28 @@ ldb_values_json_array() {
     echo "$resultJson"
 }
 
-ldb_book_name_contains_word() {
-    local word="$1"
+ldb_table_name_contains_word() {
+    local table="$1"
+    local word="$2"
     local query='.*'
     query+="$word"
     
-    ldb_values_json_array "$(ldb_query_index book name "${query}")"
+    ldb_values_json_array "$(ldb_query_index "${table}" name "${query}")"
+}
+
+ldb_book_name_contains_word() {
+    local word="$1"
+    ldb_table_name_contains_word book "${word}"
+}
+
+ldb_character_name_contains_word() {
+    local word="$1"
+    ldb_table_name_contains_word character "${word}"
+}
+
+ldb_house_name_contains_word() {
+    local word="$1"
+    ldb_table_name_contains_word house "${word}"
 }
 
 ldb_add_houses() {
